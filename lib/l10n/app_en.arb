@@ -1,3 +1,6 @@
 {
-    "appTitle" : "Event Manager"
+    "appTitle" : "Event Manager",
+    "addEvent" : "Add Event",
+    "eventDetails" : "Chi tiết sự kiện"
+
 }

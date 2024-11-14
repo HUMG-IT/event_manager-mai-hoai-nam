@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'event_model.dart';
 import 'event_service.dart';
 
+// màn hình chi tiết sự kiện, cho phép thêm mới hoặc cập nhật
 class EventDetailView extends StatefulWidget {
   final EventModel event;
   const EventDetailView({super.key, required this.event});
@@ -53,6 +54,8 @@ class _EventDetailViewState extends State<EventDetailView> {
               widget.event.endTime =
                   widget.event.startTime.add(const Duration(hours: 1));
             }
+          } else {
+            widget.event.endTime = newDateTime;
           }
         });
       }
@@ -64,11 +67,84 @@ class _EventDetailViewState extends State<EventDetailView> {
     widget.event.notes = notesController.text;
     await eventService.saveEvent(widget.event);
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    Navigator.of(context).pop(true); // trở về màn hình trước đó
+  }
+
+  Future<void> _deleteEvent() async {
+    widget.event.subject = subjectController.text;
+    widget.event.notes = notesController.text;
+    await eventService.saveEvent(widget.event);
+    if (!mounted) return;
+    Navigator.of(context).pop(true); // trở về màn hình trước đó
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    final al = AppLocalizations.of(context)!;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.event.id == null ? al.addEvent : al.eventDetails),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: subjectController,
+                decoration: const InputDecoration(labelText: 'Tên sự kiện'),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                title: const Text('sự kiện cả ngày'),
+                trailing: Switch(
+                    value: widget.event.isAllDay,
+                    onChanged: (value) {
+                      setState(() {
+                        widget.event.isAllDay = value;
+                      });
+                    }),
+              ),
+              // Sử dụng toán tử trải rộng trong Dart ...
+              if (!widget.event.isAllDay) ...[
+                const SizedBox(height: 16),
+                ListTile(
+                  title:
+                      Text('Bắt đầu: ${widget.event.formatedStartTimeString}'),
+                  trailing: const Icon(Icons.calendar_today_outlined),
+                  onTap: () => _pickDateTime(isStart: true),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  title:
+                      Text('Kết thúc: ${widget.event.formatedEndTimeString}'),
+                  trailing: const Icon(Icons.calendar_today_outlined),
+                  onTap: () => _pickDateTime(isStart: false),
+                ),
+                TextField(
+                  controller: notesController,
+                  decoration:
+                      const InputDecoration(labelText: 'Ghi chú sự kiện'),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 24),
+              ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  //Chỉ hiện thị nút xóa nếu không phải sự kiện mới
+                  if (widget.event.id != null)
+                    FilledButton.tonalIcon(
+                        onPressed: _deleteEvent,
+                        label: const Text('xóa sự kiện')),
+                  FilledButton.icon(
+                      onPressed: _saveEvent, label: const Text('lưu sự kiện'))
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
